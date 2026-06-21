@@ -97,6 +97,24 @@ GLIP/MODEL/glip_large_model.pth
 .local/ollama-models/              Optional; not needed for SG-Nav-GPT
 ```
 
+## Placeholder Rules
+
+Commands below use placeholders. Replace them with your actual values before
+running the command. Do not type the angle brackets themselves.
+
+| Placeholder | Replace with | Example |
+| --- | --- | --- |
+| `<your-jaist-id>` | your Hakusan login ID | `s1234567` |
+| `<JOBID>` | the Slurm job id printed by `sbatch` | `214632` |
+
+For example, if Slurm prints:
+
+```text
+Submitted batch job 214632
+```
+
+then every later command containing `<JOBID>` should use `214632`.
+
 ## Step 1: Clone the Repository Locally
 
 Use recursive clone because SG-Nav depends on subdirectories/submodules in the
@@ -180,6 +198,14 @@ export REMOTE_DIR="~/sg-nav-work"
 ./scripts/hakusan/scp_to_hakusan.sh
 ```
 
+Example:
+
+```bash
+export REMOTE="s1234567@hakusan1"
+export REMOTE_DIR="~/sg-nav-work"
+./scripts/hakusan/scp_to_hakusan.sh
+```
+
 The script copies the image archive, asset archive, helper scripts, and
 checksums.
 
@@ -245,12 +271,26 @@ Slurm prints a job id:
 Submitted batch job <JOBID>
 ```
 
+Example:
+
+```text
+Submitted batch job 214632
+```
+
+In this example, the job id is `214632`.
+
 ## Step 10: Monitor Progress
 
 Use the compact watcher:
 
 ```bash
 cd ~/sg-nav-work && COMPACT=1 scripts/hakusan/watch_job.sh <JOBID> sg-nav
+```
+
+Example for job `214632`:
+
+```bash
+cd ~/sg-nav-work && COMPACT=1 scripts/hakusan/watch_job.sh 214632 sg-nav
 ```
 
 The important progress lines look like this:
@@ -266,6 +306,19 @@ If you prefer a single command without the helper script:
 
 ```bash
 JOBID=<JOBID>; while true; do date; squeue -j "$JOBID"; sacct -j "$JOBID" --format=JobID,JobName,State,ExitCode,Elapsed -X 2>/dev/null || true; grep -E "\\[SG-Nav\\]|Navigate Step|distance_to_goal|success|spl|Traceback|ERROR|OpenAI" "sg-nav-${JOBID}.out" "sg-nav-${JOBID}.err" 2>/dev/null | tail -n 80; sleep 60; done
+```
+
+Example for job `214632`:
+
+```bash
+JOBID=214632; while true; do date; squeue -j "$JOBID"; sacct -j "$JOBID" --format=JobID,JobName,State,ExitCode,Elapsed -X 2>/dev/null || true; grep -E "\\[SG-Nav\\]|Navigate Step|distance_to_goal|success|spl|Traceback|ERROR|OpenAI" "sg-nav-${JOBID}.out" "sg-nav-${JOBID}.err" 2>/dev/null | tail -n 80; sleep 60; done
+```
+
+Stop monitoring with `Ctrl-C`. This stops only the monitor loop, not the Slurm
+job itself. To cancel the job, run:
+
+```bash
+scancel <JOBID>
 ```
 
 ## Step 11: Aggregate the Result
