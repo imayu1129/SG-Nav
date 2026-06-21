@@ -10,3 +10,11 @@ GroundingDINO/groundingdino_swint_ogc.pth
 .vscode
 start.py
 start_multiprocess.py
+.local/
+logs/
+.docker_build/
+dist/
+reports/*.aux
+reports/*.log
+reports/
+Notes_*.md

@@ -2,6 +2,14 @@ import argparse
 import copy
 import math
 import os
+if os.getenv("SG_NAV_VERBOSE_WARNINGS", "0") != "1":
+    import warnings
+    warnings.filterwarnings("ignore", category=SyntaxWarning)
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
+    os.environ.setdefault("GYM_DISABLE_WARNINGS", "1")
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
 from matplotlib import colors
 import cv2
 import numpy as np
@@ -134,6 +142,16 @@ class SG_Nav_Agent():
 
         if self.split:
             self.experiment_name = self.experiment_name + f'/[{self.args.split_l}:{self.args.split_r}]'
+        # Keep small subset runs in separate result directories so reproduction
+        # trials such as episodes_0_10 and episodes_10_20 do not overwrite each other.
+        if getattr(self.args, "episode_start", 0) > 0 or getattr(self.args, "num_episodes", -1) > 0:
+            episode_start = max(getattr(self.args, "episode_start", 0), 0)
+            num_episodes = getattr(self.args, "num_episodes", -1)
+            if num_episodes > 0:
+                self.experiment_name = (
+                    self.experiment_name
+                    + f'/episodes_{episode_start}_{episode_start + num_episodes}'
+                )
 
         self.visualization_dir = f'data/visualization/{self.experiment_name}/'
 
@@ -872,6 +890,27 @@ def main():
     parser.add_argument(
         "--split_r", default=11, type=int
     )
+    parser.add_argument(
+        "--num_episodes", default=int(os.getenv("SG_NAV_NUM_EPISODES", "-1")), type=int,
+        help="Limit local evaluation to the first N episodes in the selected split. Use -1 for all episodes.",
+    )
+    parser.add_argument(
+        "--episode_start", default=int(os.getenv("SG_NAV_EPISODE_START", "0")), type=int,
+        help="Start index inside the selected split for reproducible subset evaluation.",
+    )
+    parser.add_argument(
+        "--llm_backend", default=os.getenv("SG_NAV_LLM_BACKEND", "ollama"),
+        choices=["ollama", "openai"],
+        help="LLM backend for scene-graph reasoning. Use openai for SG-Nav-GPT reproduction.",
+    )
+    parser.add_argument(
+        "--llm_model", default=os.getenv("SG_NAV_LLM_MODEL", None),
+        help="Text reasoning model. Defaults to llama3.2-vision for ollama and gpt-4o for openai.",
+    )
+    parser.add_argument(
+        "--vlm_model", default=os.getenv("SG_NAV_VLM_MODEL", None),
+        help="Vision-language model for image relation checks. Defaults to the text model.",
+    )
     args = parser.parse_args()
     os.environ["CHALLENGE_CONFIG_FILE"] = "configs/challenge_objectnav2021.local.rgbd.yaml"
     config_paths = os.environ["CHALLENGE_CONFIG_FILE"]
@@ -880,7 +919,8 @@ def main():
 
     challenge = habitat.Challenge(eval_remote=False, split_l=args.split_l, split_r=args.split_r)
 
-    challenge.submit(agent)
+    num_episodes = args.num_episodes if args.num_episodes > 0 else None
+    challenge.submit(agent, num_episodes=num_episodes, episode_start=args.episode_start)
 
 
 if __name__ == "__main__":

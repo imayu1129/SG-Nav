@@ -1,6 +1,17 @@
 import base64
+import json
 import math
 import os
+if os.getenv("SG_NAV_VERBOSE_WARNINGS", "0") != "1":
+    import warnings
+    warnings.filterwarnings("ignore", category=SyntaxWarning)
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+import time
+import urllib.error
+import urllib.request
 from collections import Counter
 from io import BytesIO
 from pathlib import Path, PosixPath
@@ -158,8 +169,11 @@ class SceneGraph():
         self.init_room_nodes()
         self.reason_visualization = ''
         self.is_navigation = is_navigation
-        self.llm_name = 'llama3.2-vision'
-        self.vlm_name = 'llama3.2-vision'
+        args = getattr(agent, 'args', None)
+        self.llm_backend = (getattr(args, 'llm_backend', None) or os.getenv('SG_NAV_LLM_BACKEND', 'ollama')).lower()
+        default_model = 'gpt-4o' if self.llm_backend == 'openai' else 'llama3.2-vision'
+        self.llm_name = getattr(args, 'llm_model', None) or os.getenv('SG_NAV_LLM_MODEL', default_model)
+        self.vlm_name = getattr(args, 'vlm_model', None) or os.getenv('SG_NAV_VLM_MODEL', self.llm_name)
         self.seg_xyxy = None
         self.seg_caption = None
         
@@ -757,6 +771,8 @@ Object pair(s):
             self.update_edge()
     
     def get_llm_response(self, prompt):
+        if self.llm_backend == 'openai':
+            return self.get_openai_text_response(prompt)
         response = ollama.chat(
             model=self.llm_name,
             messages=[{
@@ -767,6 +783,8 @@ Object pair(s):
         return response.message.content
     
     def get_vlm_response(self, prompt, image):
+        if self.llm_backend == 'openai':
+            return self.get_openai_vision_response(prompt, image)
         buffered = BytesIO()
         image.save(buffered, format='PNG')
         image_bytes = base64.b64encode(buffered.getvalue())
@@ -780,6 +798,95 @@ Object pair(s):
             }]
         )
         return response.message.content
+
+    def get_openai_text_response(self, prompt):
+        payload = {
+            'model': self.llm_name,
+            'input': [{
+                'role': 'user',
+                'content': [{
+                    'type': 'input_text',
+                    'text': prompt,
+                }],
+            }],
+        }
+        return self.call_openai_responses_api(payload)
+
+    def get_openai_vision_response(self, prompt, image):
+        buffered = BytesIO()
+        image.save(buffered, format='PNG')
+        image_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        payload = {
+            'model': self.vlm_name,
+            'input': [{
+                'role': 'user',
+                'content': [
+                    {
+                        'type': 'input_text',
+                        'text': prompt,
+                    },
+                    {
+                        'type': 'input_image',
+                        'image_url': f'data:image/png;base64,{image_str}',
+                    },
+                ],
+            }],
+        }
+        return self.call_openai_responses_api(payload)
+
+    def call_openai_responses_api(self, payload):
+        # Use the standard-library HTTP client so the SG-Nav-GPT reproduction
+        # does not depend on a particular OpenAI Python SDK version.
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            raise RuntimeError('OPENAI_API_KEY is required when --llm_backend openai is used.')
+
+        base_url = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1').rstrip('/')
+        timeout = float(os.getenv('OPENAI_TIMEOUT', '120'))
+        max_retries = int(os.getenv('OPENAI_MAX_RETRIES', '3'))
+        body = json.dumps(payload).encode('utf-8')
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        }
+
+        last_error = None
+        for attempt in range(max_retries):
+            request = urllib.request.Request(
+                f'{base_url}/responses',
+                data=body,
+                headers=headers,
+                method='POST',
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=timeout) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                return self.extract_openai_output_text(data)
+            except urllib.error.HTTPError as error:
+                message = error.read().decode('utf-8', errors='replace')
+                last_error = RuntimeError(f'OpenAI API HTTP {error.code}: {message}')
+                if error.code not in (408, 409, 429, 500, 502, 503, 504):
+                    break
+            except urllib.error.URLError as error:
+                last_error = RuntimeError(f'OpenAI API connection error: {error}')
+
+            if attempt + 1 < max_retries:
+                time.sleep(2 ** attempt)
+
+        raise last_error
+
+    def extract_openai_output_text(self, data):
+        if data.get('output_text'):
+            return data['output_text']
+
+        texts = []
+        for item in data.get('output', []):
+            for content in item.get('content', []):
+                if content.get('type') in ('output_text', 'text') and content.get('text'):
+                    texts.append(content['text'])
+        if texts:
+            return '\n'.join(texts)
+        raise RuntimeError(f'OpenAI response did not contain output text: {data}')
         
     def find_modes(self, lst):  
         if len(lst) == 0:

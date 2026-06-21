@@ -26,6 +26,13 @@ import numpy as np
 from PIL import Image, ImageDraw
 from torchvision.utils import save_image
 
+def _format_metric(metrics: Dict, name: str) -> str:
+    value = metrics.get(name, None)
+    if isinstance(value, float):
+        return f"{name}={value:.4f}"
+    return f"{name}={value}"
+
+
 class Benchmark:
     r"""Benchmark for evaluating agents in environments."""
 
@@ -50,7 +57,7 @@ class Benchmark:
             self._env = Env(config=config_env)
 
     def remote_evaluate(
-        self, agent: "Agent", num_episodes: Optional[int] = None
+        self, agent: "Agent", num_episodes: Optional[int] = None, episode_start: int = 0
     ):
         # The modules imported below are specific to habitat-challenge remote evaluation.
         # These modules are not part of the habitat-lab repository.
@@ -124,8 +131,20 @@ class Benchmark:
         return avg_metrics
 
     def local_evaluate(
-        self, agent: "Agent", num_episodes: Optional[int] = None
+        self, agent: "Agent", num_episodes: Optional[int] = None, episode_start: int = 0
     ) -> Dict[str, float]:
+        assert episode_start >= 0, "episode_start should be greater than or equal to 0"
+        total_available_episodes = len(self._env.episodes)
+        assert episode_start < total_available_episodes, (
+            "episode_start({}) is outside number of episodes ({})".format(
+                episode_start, total_available_episodes
+            )
+        )
+        # For course reproduction, evaluate deterministic non-overlapping
+        # windows of the validation split without changing Habitat metrics.
+        if episode_start > 0:
+            self._env.episodes = self._env.episodes[episode_start:]
+
         if num_episodes is None:
             num_episodes = len(self._env.episodes)
         else:
@@ -137,7 +156,14 @@ class Benchmark:
             )
 
         assert num_episodes > 0, "num_episodes should be greater than 0"
-        print(num_episodes)
+        compact_metrics = os.getenv("SG_NAV_COMPACT_METRICS", "1") != "0"
+        if compact_metrics:
+            print(
+                f"[SG-Nav] episode_start={episode_start} total_episodes={num_episodes}",
+                flush=True,
+            )
+        else:
+            print(num_episodes)
         agg_metrics: Dict = defaultdict(float)
 
         count_episodes = 0
@@ -149,6 +175,14 @@ class Benchmark:
         while count_episodes < num_episodes:
             observations = self._env.reset()
             agent.reset()
+            episode_index = count_episodes + 1
+            if compact_metrics:
+                print(
+                    f"[SG-Nav] episode {episode_start + episode_index}/{episode_start + num_episodes} "
+                    f"({episode_index}/{num_episodes}) start "
+                    f"goal={getattr(agent, 'obj_goal', 'unknown')}",
+                    flush=True,
+                )
             metrics = self._env.get_metrics()
             all_metrics_0.append(metrics)
             while not self._env.episode_over:
@@ -162,7 +196,19 @@ class Benchmark:
             metrics['goal'] = agent.obj_goal
             all_metrics.append(metrics)
             metrics = self._env.get_metrics()
-            print(count_episodes, metrics)
+            if compact_metrics:
+                print(
+                    f"[SG-Nav] episode {episode_start + episode_index}/{episode_start + num_episodes} "
+                    f"({episode_index}/{num_episodes}) result "
+                    + ", ".join(
+                        _format_metric(metrics, metric_name)
+                        for metric_name in ("distance_to_goal", "success", "spl")
+                        if metric_name in metrics
+                    ),
+                    flush=True,
+                )
+            else:
+                print(count_episodes, metrics)
             if metrics['success'] == 1:
                 count_success += 1
             for m, v in metrics.items():
@@ -174,8 +220,19 @@ class Benchmark:
             count_episodes += 1
             avg_metrics = {k: v / count_episodes for k, v in agg_metrics.items()}
             all_metrics_avg.append(avg_metrics)
-            for k,v in avg_metrics.items():
-                logger.info("{}: {}".format(k, v))
+            if compact_metrics:
+                print(
+                    f"[SG-Nav] average {count_episodes}/{num_episodes}: "
+                    + ", ".join(
+                        _format_metric(avg_metrics, metric_name)
+                        for metric_name in ("distance_to_goal", "success", "spl")
+                        if metric_name in avg_metrics
+                    ),
+                    flush=True,
+                )
+            else:
+                for k,v in avg_metrics.items():
+                    logger.info("{}: {}".format(k, v))
             
             experiment_name = agent.experiment_name
 
@@ -206,7 +263,7 @@ class Benchmark:
         return avg_metrics
 
     def evaluate(
-        self, agent: "Agent", num_episodes: Optional[int] = None
+        self, agent: "Agent", num_episodes: Optional[int] = None, episode_start: int = 0
     ) -> Dict[str, float]:
         r"""..
 
@@ -217,6 +274,6 @@ class Benchmark:
         """
 
         if self._eval_remote is True:
-            return self.remote_evaluate(agent, num_episodes)
+            return self.remote_evaluate(agent, num_episodes, episode_start)
         else:
-            return self.local_evaluate(agent, num_episodes)
+            return self.local_evaluate(agent, num_episodes, episode_start)

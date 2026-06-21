@@ -1,4 +1,5 @@
 import cv2
+import os
 import torch
 import re
 import numpy as np
@@ -18,10 +19,11 @@ from maskrcnn_benchmark.modeling.roi_heads.mask_head.inference import Masker
 from maskrcnn_benchmark.utils import cv2_util
 
 engine = inflect.engine()
-nltk.download('punkt')
-nltk.download('punkt_tab')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('averaged_perceptron_tagger_eng')
+nltk_quiet = os.getenv("SG_NAV_VERBOSE_WARNINGS", "0") != "1"
+nltk.download('punkt', quiet=nltk_quiet)
+nltk.download('punkt_tab', quiet=nltk_quiet)
+nltk.download('averaged_perceptron_tagger', quiet=nltk_quiet)
+nltk.download('averaged_perceptron_tagger_eng', quiet=nltk_quiet)
 
 import timeit
 
