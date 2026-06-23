@@ -253,6 +253,23 @@ If the command has not returned to the shell prompt, the run is still active.
 Fatal errors usually include `Traceback`, `RuntimeError`, or
 `ERROR: SG-Nav run failed`.
 
+The run has started correctly when you see lines like these:
+
+```text
+Successfully loaded stage named : data/MatterPort3D/mp3d/...
+reconstruct navmesh successful
+Initializing task ObjectNav-v1
+[SG-Nav] episode_start=0 total_episodes=10
+[SG-Nav] episode 1/10 (1/10) start goal=...
+Navigate Step: 0
+```
+
+The run is complete when `run_10_episodes_on_node.sh` prints:
+
+```text
+OK: SG-Nav run completed.
+```
+
 ## 7. Aggregate Results
 
 Run this inside the A40 session after the job completes:
