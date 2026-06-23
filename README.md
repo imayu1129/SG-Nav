@@ -117,9 +117,17 @@ cd "$HOME/sg-nav"
 ./scripts/hakusan/prepare_bundle_on_node.sh
 ```
 
-If this stops during SIF build, run `git pull --ff-only` and then run
+If this stops during SIF build or you press `Ctrl-C`, run
 `./scripts/hakusan/prepare_bundle_on_node.sh` again. Completed extraction steps
-are skipped.
+are skipped, and an incomplete SIF is removed automatically.
+
+Rootless Singularity can print many harmless `warn rootless ... EPERM on
+setxattr` messages during SIF build. The script hides those warnings by
+default. To show them for debugging, run:
+
+```bash
+SHOW_ROOTLESS_WARNINGS=1 ./scripts/hakusan/prepare_bundle_on_node.sh
+```
 
 If `git pull --ff-only` says local script changes would be overwritten, restore
 the GitHub scripts and pull again:
