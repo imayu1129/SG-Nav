@@ -32,12 +32,9 @@ fi
 echo "[3/7] Checking extracted archive checksums."
 sha256sum --ignore-missing -c SHA256SUMS
 
-echo "[4/7] Extracting helper files."
-if [[ -f scripts/hakusan/build_sif_on_hakusan.sh ]]; then
-  echo "Helper files already exist. Extracting again is skipped."
-else
-  tar -xzf sg-nav_hakusan_readme_submit_files.tar.gz
-fi
+echo "[4/7] Keeping helper files from the GitHub checkout."
+echo "The helper archive checksum was verified in [3/7]; it is not extracted here."
+echo "This avoids overwriting newer scripts pulled from GitHub."
 
 echo "[5/7] Extracting assets on this A40 compute node."
 if [[ -d assets/data/MatterPort3D/mp3d && -d assets/GLIP/MODEL ]]; then

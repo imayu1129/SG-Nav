@@ -121,6 +121,15 @@ If this stops during SIF build, run `git pull --ff-only` and then run
 `./scripts/hakusan/prepare_bundle_on_node.sh` again. Completed extraction steps
 are skipped.
 
+If `git pull --ff-only` says local script changes would be overwritten, restore
+the GitHub scripts and pull again:
+
+```bash
+git fetch origin
+git restore scripts/hakusan/build_sif_on_hakusan.sh scripts/hakusan/sg_nav_hakusan.sbatch
+git pull --ff-only
+```
+
 This step is successful if you see:
 
 ```text
