@@ -12,23 +12,7 @@ set -euo pipefail
 
 cd "${SLURM_SUBMIT_DIR:-$HOME/sg-nav-work}"
 
-if [[ -r /etc/profile.d/modules.sh ]]; then
-  # Some Hakusan compute nodes expose container tools only after module init.
-  # This does not change the SG-Nav environment inside the container.
-  # shellcheck disable=SC1091
-  source /etc/profile.d/modules.sh
-fi
-
-if ! command -v singularity >/dev/null 2>&1 && ! command -v apptainer >/dev/null 2>&1; then
-  module load singularity 2>/dev/null || module load apptainer 2>/dev/null || true
-fi
-
-CONTAINER_BIN="$(command -v singularity || command -v apptainer || true)"
-if [[ -z "${CONTAINER_BIN}" ]]; then
-  echo "ERROR: neither singularity nor apptainer was found on this node." >&2
-  echo "Run 'module avail singularity apptainer' on Hakusan to confirm the module name." >&2
-  exit 127
-fi
+CONTAINER_BIN="$(./scripts/hakusan/find_container_bin.sh)"
 
 export SINGULARITYENV_NVIDIA_DRIVER_CAPABILITIES=all
 export SINGULARITYENV___EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json

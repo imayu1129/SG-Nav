@@ -22,19 +22,31 @@ ls -lh sg-nav_reproduction_bundle.tar.gz
 printf '%s  sg-nav_reproduction_bundle.tar.gz\n' "$EXPECTED_SHA256" | sha256sum -c -
 
 echo "[2/7] Extracting the 30G reproduction bundle on this A40 compute node."
-tar --checkpoint=200000 --checkpoint-action=dot -xzf sg-nav_reproduction_bundle.tar.gz
-echo
+if [[ -f SHA256SUMS && -f sg-nav_hakusan_readme.tar.gz && -f sg-nav_hakusan_readme_assets.tar.gz && -f sg-nav_hakusan_readme_submit_files.tar.gz ]]; then
+  echo "Archive files already exist. Skipping bundle extraction."
+else
+  tar --checkpoint=200000 --checkpoint-action=dot -xzf sg-nav_reproduction_bundle.tar.gz
+  echo
+fi
 
 echo "[3/7] Checking extracted archive checksums."
 sha256sum --ignore-missing -c SHA256SUMS
 
 echo "[4/7] Extracting helper files."
-tar -xzf sg-nav_hakusan_readme_submit_files.tar.gz
+if [[ -f scripts/hakusan/build_sif_on_hakusan.sh ]]; then
+  echo "Helper files already exist. Extracting again is skipped."
+else
+  tar -xzf sg-nav_hakusan_readme_submit_files.tar.gz
+fi
 
 echo "[5/7] Extracting assets on this A40 compute node."
-mkdir -p assets
-tar --checkpoint=200000 --checkpoint-action=dot -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
-echo
+if [[ -d assets/data/MatterPort3D/mp3d && -d assets/GLIP/MODEL ]]; then
+  echo "Assets already exist. Skipping assets extraction."
+else
+  mkdir -p assets
+  tar --checkpoint=200000 --checkpoint-action=dot -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
+  echo
+fi
 
 echo "[6/7] Building the Singularity image from the Docker archive."
 ./scripts/hakusan/build_sif_on_hakusan.sh sg-nav_hakusan_readme.tar.gz

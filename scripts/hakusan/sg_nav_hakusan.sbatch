@@ -26,25 +26,8 @@ if [[ -r "${SG_NAV_SECRET_ENV}" ]]; then
   source "${SG_NAV_SECRET_ENV}"
 fi
 
-if [[ -r /etc/profile.d/modules.sh ]]; then
-  # Some Hakusan compute nodes expose container tools only after module init.
-  # This does not change the SG-Nav environment inside the container.
-  # shellcheck disable=SC1091
-  source /etc/profile.d/modules.sh
-fi
-
-if ! command -v singularity >/dev/null 2>&1 && ! command -v apptainer >/dev/null 2>&1; then
-  module load singularity 2>/dev/null || module load apptainer 2>/dev/null || true
-fi
-
-CONTAINER_BIN="$(command -v singularity || command -v apptainer || true)"
-if [[ -z "${CONTAINER_BIN}" ]]; then
-  echo "ERROR: neither singularity nor apptainer was found on this node." >&2
-  echo "Run 'module avail singularity apptainer' on Hakusan to confirm the module name." >&2
-  exit 127
-fi
-
 cd "${SLURM_SUBMIT_DIR:-$PWD}"
+CONTAINER_BIN="$(./scripts/hakusan/find_container_bin.sh)"
 
 # Habitat-Sim creates a headless EGL context. Keep legacy --nv because it is
 # the mode that exposed CUDA on Hakusan, then explicitly bind host NVIDIA EGL

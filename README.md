@@ -117,6 +117,10 @@ cd "$HOME/sg-nav"
 ./scripts/hakusan/prepare_bundle_on_node.sh
 ```
 
+If this stops during SIF build, run `git pull --ff-only` and then run
+`./scripts/hakusan/prepare_bundle_on_node.sh` again. Completed extraction steps
+are skipped.
+
 This step is successful if you see:
 
 ```text
@@ -221,7 +225,8 @@ Distance-to-goal: 3.194
 - `WARNING: Could not find any nv files on this host`: you are probably not
   inside the A40 compute node. Run Step 2 first.
 - `EGL_NOT_INITIALIZED`: use `scripts/hakusan/sg_nav_hakusan.sbatch`.
-- `singularity: command not found`: load Singularity/Apptainer on Hakusan.
+- `singularity: command not found`: run `git pull --ff-only` and rerun the same
+  step. The scripts search both modules and Hakusan absolute install paths.
 - `Connection closed by ... port 22`: try `hakusan2`, then retry later if both
   login nodes reject the session.
 
