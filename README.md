@@ -25,7 +25,7 @@ sg-nav_reproduction_bundle.tar.gz
 The bundle contains the Singularity image, helper files, MP3D ObjectNav data,
 and model checkpoints. You only need to prepare your own OpenAI API key.
 
-## 1. Login and Clone on Hakusan
+## 1. Login and Set Up Hakusan
 
 Run this on your local machine. Replace `s2YOUR_ID` with your JAIST ID.
 
@@ -48,20 +48,19 @@ cd "$HOME/sg-nav"
 pwd
 ```
 
-## 2. Copy the Bundle to Hakusan
-
-Open another terminal on your local machine. Move to the folder that contains
-`sg-nav_reproduction_bundle.tar.gz`.
+Download the reproduction bundle on Hakusan:
 
 ```bash
+BUNDLE_URL="https://github.com/imayu1129/SG-Nav/releases/download/reproduction/sg-nav_reproduction_bundle.tar.gz"
+curl -fL "$BUNDLE_URL" -o sg-nav_reproduction_bundle.tar.gz
 ls -lh sg-nav_reproduction_bundle.tar.gz
-export JAIST_ID=s2YOUR_ID
-scp sg-nav_reproduction_bundle.tar.gz "${JAIST_ID}@hakusan1.jaist.ac.jp:~/sg-nav/"
 ```
 
-## 3. Extract the Bundle on Hakusan
+If `curl` returns `404`, the reproduction bundle has not been uploaded yet.
 
-Go back to the Hakusan terminal and run:
+## 2. Extract the Bundle
+
+Run this on Hakusan:
 
 ```bash
 cd "$HOME/sg-nav"
@@ -73,7 +72,7 @@ tar -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
 ls -lh sg-nav_hakusan_readme.sif
 ```
 
-## 4. Check Container and Assets
+## 3. Check Container and Assets
 
 Run this on Hakusan:
 
@@ -92,7 +91,7 @@ tail -n 80 check-env-*.out check-env-*.err 2>/dev/null
 
 Do not start evaluation until this check passes.
 
-## 5. Configure OpenAI
+## 4. Configure OpenAI
 
 Run this on Hakusan:
 
@@ -120,7 +119,7 @@ Expected:
 OK: OpenAI Responses API is reachable for model=gpt-4o.
 ```
 
-## 6. Run 10 Episodes
+## 5. Run 10 Episodes
 
 Run this on Hakusan:
 
@@ -151,7 +150,7 @@ Cancel the job if needed:
 scancel <JOBID>
 ```
 
-## 7. Aggregate Results
+## 6. Aggregate Results
 
 Run this on Hakusan after the job completes:
 
@@ -197,4 +196,10 @@ This is only for the person preparing the reproduction artifact:
 
 ```bash
 ./scripts/hakusan/package_reproduction_bundle.sh
+gh release view reproduction >/dev/null 2>&1 || \
+  gh release create reproduction --title "SG-Nav reproduction bundle" --notes "Reproduction bundle for SG-Nav-GPT MP3D."
+gh release upload reproduction \
+  dist/hakusan/sg-nav_reproduction_bundle.tar.gz \
+  dist/hakusan/sg-nav_reproduction_bundle.tar.gz.sha256 \
+  --clobber
 ```
