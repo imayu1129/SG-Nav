@@ -214,14 +214,24 @@ Run this inside the A40 session:
 ```bash
 cd "$HOME/sg-nav"
 git pull --ff-only
-source "$HOME/.config/sg-nav/openai.env"
-set -o pipefail
-ARGS="--split_l 0 --split_r 1 --num_episodes 10" \
-  LLM_BACKEND=openai LLM_MODEL=gpt-4o VLM_MODEL=gpt-4o \
-  bash scripts/hakusan/sg_nav_hakusan.sbatch 2>&1 | tee "sg-nav-a40-${SLURM_JOB_ID}.log"
+./scripts/hakusan/run_10_episodes_on_node.sh
 ```
 
 The run log is saved as `sg-nav-a40-${SLURM_JOB_ID}.log`.
+
+To watch the run from another Hakusan terminal:
+
+```bash
+cd "$HOME/sg-nav"
+./scripts/hakusan/watch_latest_run_log.sh
+```
+
+To check that the A40 session is still alive:
+
+```bash
+squeue -j "$SLURM_JOB_ID"
+squeue -u "$USER"
+```
 
 ## 7. Aggregate Results
 
