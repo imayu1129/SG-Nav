@@ -52,6 +52,12 @@ ssh s2YOUR_ID@hakusan1.jaist.ac.jp
 
 Input your password.
 
+If `hakusan1` closes the connection after password input, try `hakusan2`:
+
+```bash
+ssh s2YOUR_ID@hakusan2.jaist.ac.jp
+```
+
 Then run this on Hakusan:
 
 ```bash
@@ -226,6 +232,8 @@ Distance-to-goal: 3.194
   inside the A40 compute node. Run Step 2 first.
 - `EGL_NOT_INITIALIZED`: use `scripts/hakusan/sg_nav_hakusan.sbatch`.
 - `singularity: command not found`: load Singularity/Apptainer on Hakusan.
+- `Connection closed by ... port 22`: try `hakusan2`, then retry later if both
+  login nodes reject the session.
 
 ## Author: Create the Bundle
 
