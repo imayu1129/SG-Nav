@@ -1,7 +1,7 @@
 # SG-Nav-GPT MP3D Reproduction
 
-Use the provided Docker/Singularity image. Do **not** create a host-side
-`SG_Nav` conda environment.
+Use the provided reproduction bundle. Do **not** create a host-side `SG_Nav`
+conda environment.
 
 Reference result:
 
@@ -13,6 +13,17 @@ Paper:   SR 40.2%, SPL 16.0% on full validation
 
 Exact reruns can differ slightly because GPT responses, OpenAI model serving,
 GPU numerics, and the 10-episode subset are not bitwise deterministic.
+
+## What You Need
+
+The author provides this file separately:
+
+```text
+sg-nav_reproduction_bundle.tar.gz
+```
+
+The bundle contains the Singularity image, helper files, MP3D ObjectNav data,
+and model checkpoints. You only need to prepare your own OpenAI API key.
 
 ## 1. Login and Clone on Hakusan
 
@@ -35,117 +46,31 @@ fi
 
 cd "$HOME/sg-nav"
 pwd
-ls -lh
 ```
 
-## 2. Copy Container and Assets to Hakusan
+## 2. Copy the Bundle to Hakusan
 
-The GitHub repository does **not** contain the SIF image, Docker archive, MP3D
-data, or model checkpoints.
-
-Open another terminal on your local machine. If you built the artifacts from
-this repository, run:
+Open another terminal on your local machine. Move to the folder that contains
+`sg-nav_reproduction_bundle.tar.gz`.
 
 ```bash
-cd dist/hakusan
-```
-
-If the files are in another folder, `cd` to that folder instead. Confirm the
-files:
-
-```bash
-ls -lh
-```
-
-You need either this SIF file:
-
-```text
-sg-nav_hakusan_readme.sif
-```
-
-or this Docker archive:
-
-```text
-sg-nav_hakusan_readme.tar.gz
-```
-
-You also need:
-
-```text
-sg-nav_hakusan_readme_submit_files.tar.gz
-SHA256SUMS
-```
-
-If available, also use:
-
-```text
-sg-nav_hakusan_readme_assets.tar.gz
-```
-
-Upload the SIF version:
-
-```bash
+ls -lh sg-nav_reproduction_bundle.tar.gz
 export JAIST_ID=s2YOUR_ID
-export REMOTE="${JAIST_ID}@hakusan1.jaist.ac.jp"
-export REMOTE_DIR="~/sg-nav"
-
-scp sg-nav_hakusan_readme.sif \
-    sg-nav_hakusan_readme_submit_files.tar.gz \
-    SHA256SUMS \
-    "${REMOTE}:${REMOTE_DIR}/"
+scp sg-nav_reproduction_bundle.tar.gz "${JAIST_ID}@hakusan1.jaist.ac.jp:~/sg-nav/"
 ```
 
-If you have the Docker archive instead of the SIF, run this:
-
-```bash
-export JAIST_ID=s2YOUR_ID
-export REMOTE="${JAIST_ID}@hakusan1.jaist.ac.jp"
-export REMOTE_DIR="~/sg-nav"
-
-scp sg-nav_hakusan_readme.tar.gz \
-    sg-nav_hakusan_readme_submit_files.tar.gz \
-    SHA256SUMS \
-    "${REMOTE}:${REMOTE_DIR}/"
-```
-
-If you have the asset archive, upload it too:
-
-```bash
-scp sg-nav_hakusan_readme_assets.tar.gz "${REMOTE}:${REMOTE_DIR}/"
-```
-
-If there is no asset archive, manually place the assets on Hakusan at:
-
-```text
-~/sg-nav/assets/data/MatterPort3D/mp3d/<scene_id>/<scene_id>.glb
-~/sg-nav/assets/data/MatterPort3D/objectnav/mp3d/v1/val/val.json.gz
-~/sg-nav/assets/data/MatterPort3D/objectnav/mp3d/v1/val/content/*.json.gz
-~/sg-nav/assets/data/models/sam_vit_h_4b8939.pth
-~/sg-nav/assets/data/models/groundingdino_swint_ogc.pth
-~/sg-nav/assets/GLIP/MODEL/glip_large_model.pth
-```
-
-## 3. Prepare Runtime on Hakusan
+## 3. Extract the Bundle on Hakusan
 
 Go back to the Hakusan terminal and run:
 
 ```bash
 cd "$HOME/sg-nav"
-ls -lh
+tar -xzf sg-nav_reproduction_bundle.tar.gz
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sg-nav_hakusan_readme_submit_files.tar.gz
 mkdir -p assets
-if [[ -f sg-nav_hakusan_readme_assets.tar.gz ]]; then
-  tar -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
-fi
-```
-
-If `sg-nav_hakusan_readme.sif` is missing but
-`sg-nav_hakusan_readme.tar.gz` exists, build the SIF:
-
-```bash
-cd "$HOME/sg-nav"
-./scripts/hakusan/build_sif_on_hakusan.sh sg-nav_hakusan_readme.tar.gz
+tar -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
+ls -lh sg-nav_hakusan_readme.sif
 ```
 
 ## 4. Check Container and Assets
@@ -255,12 +180,21 @@ Distance-to-goal: 3.194
 
 ## Troubleshooting
 
-- `Matterport3D scenes directory is missing`: check
-  `~/sg-nav/assets/data/MatterPort3D/mp3d`.
-- `ObjectNav val episode file is missing`: check
-  `~/sg-nav/assets/data/MatterPort3D/objectnav/mp3d/v1/val/val.json.gz`.
-- `model checkpoint is missing`: check the SAM, GroundingDINO, and GLIP weights.
+- `Matterport3D scenes directory is missing`: the bundle was not extracted into
+  `~/sg-nav/assets`.
+- `ObjectNav val episode file is missing`: the bundle was not extracted into
+  `~/sg-nav/assets`.
+- `model checkpoint is missing`: the bundle was not extracted into
+  `~/sg-nav/assets`.
 - `OpenAI API HTTP 429 ... insufficient_quota`: fix OpenAI billing/quota.
 - `WARNING: Could not find any nv files on this host`: submit a Slurm GPU job.
 - `EGL_NOT_INITIALIZED`: use `scripts/hakusan/sg_nav_hakusan.sbatch`.
 - `singularity: command not found`: load Singularity/Apptainer on Hakusan.
+
+## Author: Create the Bundle
+
+This is only for the person preparing the reproduction artifact:
+
+```bash
+./scripts/hakusan/package_reproduction_bundle.sh
+```
