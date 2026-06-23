@@ -182,13 +182,8 @@ Do not start evaluation until this check passes.
 Run this inside the A40 session:
 
 ```bash
-mkdir -p "$HOME/.config/sg-nav"
-chmod 700 "$HOME/.config/sg-nav"
-read -rsp "OPENAI_API_KEY: " OPENAI_API_KEY; echo
-umask 077
-printf 'export OPENAI_API_KEY=%q\nexport LLM_BACKEND=openai\nexport LLM_MODEL=gpt-4o\nexport VLM_MODEL=gpt-4o\n' "$OPENAI_API_KEY" > "$HOME/.config/sg-nav/openai.env"
-chmod 600 "$HOME/.config/sg-nav/openai.env"
-unset OPENAI_API_KEY
+cd "$HOME/sg-nav"
+./scripts/hakusan/configure_openai_key.sh
 ```
 
 Check API access:
@@ -204,6 +199,10 @@ Expected:
 ```text
 OK: OpenAI Responses API is reachable for model=gpt-4o.
 ```
+
+If this returns `HTTP 500` or another transient server error, wait a minute and
+run the same check command again. The checker retries transient errors
+automatically.
 
 ## 6. Run 10 Episodes
 
