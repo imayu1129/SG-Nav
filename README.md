@@ -51,17 +51,16 @@ cd "$HOME/sg-nav"
 pwd
 ```
 
-Download the reproduction bundle on Hakusan. Replace
-`PASTE_BOX_OR_PRIVATE_DOWNLOAD_URL_HERE` with the URL provided by the author:
+Download the reproduction bundle on Hakusan:
 
 ```bash
-BUNDLE_URL="PASTE_BOX_OR_PRIVATE_DOWNLOAD_URL_HERE"
+BUNDLE_URL="https://jstorage.app.box.com/index.php?rm=box_download_shared_file&shared_name=semgxoruxgg1psnha4dzrlv4e7699p0b&file_id=f_2303493332796"
 curl -fL "$BUNDLE_URL" -o sg-nav_reproduction_bundle.tar.gz
 ls -lh sg-nav_reproduction_bundle.tar.gz
 ```
 
-If `curl` returns `404` or `403`, ask the author for the correct private bundle
-URL or access permission.
+If `curl` returns `404` or `403`, open the Box link in a browser and check that
+download permission is enabled.
 
 ## 2. Extract the Bundle
 
