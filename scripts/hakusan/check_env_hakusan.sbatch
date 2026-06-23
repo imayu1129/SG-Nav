@@ -61,6 +61,9 @@ fi
 if [[ -d "$PWD/assets/.local/ollama" ]]; then
   EXTRA_BINDS+=(--bind "$PWD/assets/.local/ollama:/opt/sg-nav/.local/ollama")
 fi
+if [[ -d "$PWD/assets/.local/ollama-models" ]]; then
+  EXTRA_BINDS+=(--bind "$PWD/assets/.local/ollama-models:/opt/sg-nav/.local/ollama-models")
+fi
 mkdir -p "$PWD/runtime/check-env-${SLURM_JOB_ID:-manual}"
 EXTRA_BINDS+=(--bind "$PWD/runtime/check-env-${SLURM_JOB_ID:-manual}:/runtime")
 
@@ -76,5 +79,4 @@ CONTAINER_ENV_ARGS=(
 "${CONTAINER_BIN}" exec "${GPU_ARGS[@]}" "${EXTRA_BINDS[@]}" "${CONTAINER_ENV_ARGS[@]}" \
   --bind "$PWD/assets/data:/opt/sg-nav/data" \
   --bind "$PWD/assets/GLIP/MODEL:/opt/sg-nav/GLIP/MODEL" \
-  --bind "$PWD/assets/.local/ollama-models:/opt/sg-nav/.local/ollama-models" \
   sg-nav_hakusan_readme.sif bash -lc 'cd /opt/sg-nav && ./check_sg_nav_env.sh'

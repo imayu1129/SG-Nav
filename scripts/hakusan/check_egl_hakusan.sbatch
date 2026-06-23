@@ -58,6 +58,9 @@ fi
 if [[ -d "$PWD/assets/.local/ollama" ]]; then
   EXTRA_BINDS+=(--bind "$PWD/assets/.local/ollama:/opt/sg-nav/.local/ollama")
 fi
+if [[ -d "$PWD/assets/.local/ollama-models" ]]; then
+  EXTRA_BINDS+=(--bind "$PWD/assets/.local/ollama-models:/opt/sg-nav/.local/ollama-models")
+fi
 mkdir -p "$PWD/runtime/check-egl-${SLURM_JOB_ID:-manual}"
 EXTRA_BINDS+=(--bind "$PWD/runtime/check-egl-${SLURM_JOB_ID:-manual}:/runtime")
 
@@ -78,7 +81,6 @@ echo "HOST_EGL_LIB=${HOST_EGL_LIB:-missing}"
 "${CONTAINER_BIN}" exec "${GPU_ARGS[@]}" "${EXTRA_BINDS[@]}" "${CONTAINER_ENV_ARGS[@]}" \
   --bind "$PWD/assets/data:/opt/sg-nav/data" \
   --bind "$PWD/assets/GLIP/MODEL:/opt/sg-nav/GLIP/MODEL" \
-  --bind "$PWD/assets/.local/ollama-models:/opt/sg-nav/.local/ollama-models" \
   sg-nav_hakusan_readme.sif bash -lc '
     set -euo pipefail
     cd /opt/sg-nav

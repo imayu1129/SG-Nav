@@ -80,6 +80,9 @@ fi
 if [[ -d "${ASSETS_DIR}/.local/ollama" ]]; then
   EXTRA_BINDS+=(--bind "${ASSETS_DIR}/.local/ollama:/opt/sg-nav/.local/ollama")
 fi
+if [[ -d "${ASSETS_DIR}/.local/ollama-models" ]]; then
+  EXTRA_BINDS+=(--bind "${ASSETS_DIR}/.local/ollama-models:/opt/sg-nav/.local/ollama-models")
+fi
 for source_file in SG_Nav.py scenegraph.py run_sg_nav.sh; do
   if [[ -f "$PWD/${source_file}" ]]; then
     EXTRA_BINDS+=(--bind "$PWD/${source_file}:/opt/sg-nav/${source_file}:ro")
@@ -140,7 +143,6 @@ echo "VLM_MODEL=${VLM_MODEL:-default}"
 "${CONTAINER_BIN}" exec "${GPU_ARGS[@]}" "${EXTRA_BINDS[@]}" "${CONTAINER_ENV_ARGS[@]}" \
   --bind "${ASSETS_DIR}/data:/opt/sg-nav/data" \
   --bind "${ASSETS_DIR}/GLIP/MODEL:/opt/sg-nav/GLIP/MODEL" \
-  --bind "${ASSETS_DIR}/.local/ollama-models:/opt/sg-nav/.local/ollama-models" \
   "${IMAGE}" bash -lc "
     set -euo pipefail
     cd /opt/sg-nav
