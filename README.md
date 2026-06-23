@@ -129,6 +129,15 @@ default. To show them for debugging, run:
 SHOW_ROOTLESS_WARNINGS=1 ./scripts/hakusan/prepare_bundle_on_node.sh
 ```
 
+During `INFO: Creating SIF file...`, the final `.sif` file may not appear until
+the build completes. From another Hakusan login terminal, check that the
+interactive A40 job is still running:
+
+```bash
+squeue -j "$SLURM_JOB_ID"
+squeue -u "$USER"
+```
+
 If `git pull --ff-only` says local script changes would be overwritten, restore
 the GitHub scripts and pull again:
 
