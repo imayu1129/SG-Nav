@@ -241,6 +241,18 @@ git pull --ff-only
 ./scripts/hakusan/run_10_episodes_on_node.sh
 ```
 
+These messages are expected and are not fatal errors:
+
+```text
+libtinfo.so.6: no version information available
+Gym has been unmaintained since 2022
+EARLY FUSION ON, USING MHA-B
+```
+
+If the command has not returned to the shell prompt, the run is still active.
+Fatal errors usually include `Traceback`, `RuntimeError`, or
+`ERROR: SG-Nav run failed`.
+
 ## 7. Aggregate Results
 
 Run this inside the A40 session after the job completes:
