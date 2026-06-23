@@ -23,6 +23,19 @@ institutional download URL:
 sg-nav_reproduction_bundle.tar.gz
 ```
 
+Box browser page:
+
+```text
+https://jstorage.box.com/s/semgxoruxgg1psnha4dzrlv4e7699p0b
+```
+
+Expected bundle:
+
+```text
+Size:   30G
+SHA256: d253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607
+```
+
 The bundle contains the Docker image archive, helper files, MP3D ObjectNav data,
 and model checkpoints. You only need to prepare your own OpenAI API key.
 
@@ -57,6 +70,7 @@ Download the reproduction bundle on Hakusan:
 BUNDLE_URL="https://jstorage.app.box.com/index.php?rm=box_download_shared_file&shared_name=semgxoruxgg1psnha4dzrlv4e7699p0b&file_id=f_2303493332796"
 curl -fL "$BUNDLE_URL" -o sg-nav_reproduction_bundle.tar.gz
 ls -lh sg-nav_reproduction_bundle.tar.gz
+printf 'd253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607  sg-nav_reproduction_bundle.tar.gz\n' | sha256sum -c -
 ```
 
 If `curl` returns `404` or `403`, open the Box link in a browser and check that
