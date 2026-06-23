@@ -169,6 +169,12 @@ cd "$HOME/sg-nav"
 ./scripts/hakusan/check_env_on_node.sh
 ```
 
+This step is successful if you see:
+
+```text
+OK: container and assets check passed on the A40 compute node.
+```
+
 Do not start evaluation until this check passes.
 
 ## 5. Configure OpenAI

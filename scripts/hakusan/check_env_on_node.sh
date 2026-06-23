@@ -65,3 +65,5 @@ CONTAINER_ENV_ARGS=(
   --bind "$PWD/assets/data:/opt/sg-nav/data" \
   --bind "$PWD/assets/GLIP/MODEL:/opt/sg-nav/GLIP/MODEL" \
   sg-nav_hakusan_readme.sif bash -lc 'cd /opt/sg-nav && ./check_sg_nav_env.sh'
+
+echo "OK: container and assets check passed on the A40 compute node."
