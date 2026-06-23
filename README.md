@@ -69,9 +69,17 @@ Download the reproduction bundle on Hakusan:
 
 ```bash
 BUNDLE_URL="https://jstorage.app.box.com/index.php?rm=box_download_shared_file&shared_name=semgxoruxgg1psnha4dzrlv4e7699p0b&file_id=f_2303493332796"
-curl -fL "$BUNDLE_URL" -o sg-nav_reproduction_bundle.tar.gz
-ls -lh sg-nav_reproduction_bundle.tar.gz
-printf 'd253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607  sg-nav_reproduction_bundle.tar.gz\n' | sha256sum -c -
+EXPECTED_SHA256="d253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607"
+
+if [[ -f sg-nav_reproduction_bundle.tar.gz ]] && \
+   printf '%s  sg-nav_reproduction_bundle.tar.gz\n' "$EXPECTED_SHA256" | sha256sum -c -; then
+  echo "Bundle already exists and passed SHA256. Skipping download."
+else
+  curl -fL -C - --retry 10 --retry-delay 10 --retry-all-errors \
+    "$BUNDLE_URL" -o sg-nav_reproduction_bundle.tar.gz
+  ls -lh sg-nav_reproduction_bundle.tar.gz
+  printf '%s  sg-nav_reproduction_bundle.tar.gz\n' "$EXPECTED_SHA256" | sha256sum -c -
+fi
 ```
 
 Expected:
@@ -82,6 +90,8 @@ sg-nav_reproduction_bundle.tar.gz: OK
 
 If `curl` returns `404` or `403`, open the Box link in a browser and check that
 download permission is enabled.
+If the download speed is extremely slow, press `Ctrl-C` and run the same block
+again later. The `-C -` option resumes an incomplete download.
 
 ## 2. Extract the Bundle
 
