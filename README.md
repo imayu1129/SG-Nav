@@ -16,8 +16,8 @@ GPU numerics, and the 10-episode subset are not bitwise deterministic.
 
 ## What You Need
 
-The author provides this file separately through a private or institutional
-download URL:
+The author provides this file separately through Box or another private
+institutional download URL:
 
 ```text
 sg-nav_reproduction_bundle.tar.gz
@@ -52,10 +52,10 @@ pwd
 ```
 
 Download the reproduction bundle on Hakusan. Replace
-`PASTE_PRIVATE_BUNDLE_URL_HERE` with the URL provided by the author:
+`PASTE_BOX_OR_PRIVATE_DOWNLOAD_URL_HERE` with the URL provided by the author:
 
 ```bash
-BUNDLE_URL="PASTE_PRIVATE_BUNDLE_URL_HERE"
+BUNDLE_URL="PASTE_BOX_OR_PRIVATE_DOWNLOAD_URL_HERE"
 curl -fL "$BUNDLE_URL" -o sg-nav_reproduction_bundle.tar.gz
 ls -lh sg-nav_reproduction_bundle.tar.gz
 ```
@@ -206,3 +206,10 @@ This is only for the person preparing the reproduction artifact:
 
 Upload `dist/hakusan/sg-nav_reproduction_bundle.tar.gz` to a private or
 institutional file host, then put that URL in Step 1.
+
+The current tested bundle is:
+
+```text
+Size:   30G
+SHA256: d253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607
+```
