@@ -89,12 +89,26 @@ Run this on Hakusan:
 
 ```bash
 cd "$HOME/sg-nav"
-tar -xzf sg-nav_reproduction_bundle.tar.gz
+
+echo "[1/6] Extracting the 30G reproduction bundle. This can take several minutes."
+tar --checkpoint=200000 --checkpoint-action=dot -xzf sg-nav_reproduction_bundle.tar.gz
+echo
+
+echo "[2/6] Checking the extracted archive checksums."
 sha256sum --ignore-missing -c SHA256SUMS
+
+echo "[3/6] Extracting helper files."
 tar -xzf sg-nav_hakusan_readme_submit_files.tar.gz
+
+echo "[4/6] Extracting assets. This can also take several minutes."
 mkdir -p assets
-tar -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
+tar --checkpoint=200000 --checkpoint-action=dot -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
+echo
+
+echo "[5/6] Building the Singularity image from the Docker archive."
 ./scripts/hakusan/build_sif_on_hakusan.sh sg-nav_hakusan_readme.tar.gz
+
+echo "[6/6] Checking the SIF image."
 ls -lh sg-nav_hakusan_readme.sif
 ```
 
