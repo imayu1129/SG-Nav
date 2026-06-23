@@ -38,6 +38,7 @@ SHA256: d253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607
 
 The bundle contains the Docker image archive, helper files, MP3D ObjectNav data,
 and model checkpoints. You only need to prepare your own OpenAI API key.
+The OpenAI API key is not needed for Steps 1-3. It is needed from Step 4.
 
 Do not upload this bundle to a public GitHub Release if it contains MP3D data.
 
@@ -73,6 +74,12 @@ ls -lh sg-nav_reproduction_bundle.tar.gz
 printf 'd253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607  sg-nav_reproduction_bundle.tar.gz\n' | sha256sum -c -
 ```
 
+Expected:
+
+```text
+sg-nav_reproduction_bundle.tar.gz: OK
+```
+
 If `curl` returns `404` or `403`, open the Box link in a browser and check that
 download permission is enabled.
 
@@ -91,19 +98,31 @@ tar -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
 ls -lh sg-nav_hakusan_readme.sif
 ```
 
+This step is successful if you see all of these:
+
+```text
+sg-nav_hakusan_readme.tar.gz: OK
+sg-nav_hakusan_readme_assets.tar.gz: OK
+sg-nav_hakusan_readme_submit_files.tar.gz: OK
+```
+
+and `ls -lh sg-nav_hakusan_readme.sif` shows a SIF file. Do not run Step 3
+before this succeeds.
+
 ## 3. Check Container and Assets
 
 Run this on Hakusan:
 
 ```bash
 cd "$HOME/sg-nav"
-sbatch scripts/hakusan/check_env_hakusan.sbatch
+JOBID=$(sbatch scripts/hakusan/check_env_hakusan.sbatch | awk '{print $4}')
+echo "$JOBID"
 ```
 
 Check the job:
 
 ```bash
-squeue -u "$USER"
+squeue -j "$JOBID"
 ls -lh check-env-*.out check-env-*.err 2>/dev/null || true
 tail -n 80 check-env-*.out check-env-*.err 2>/dev/null
 ```
@@ -145,28 +164,23 @@ Run this on Hakusan:
 ```bash
 cd "$HOME/sg-nav"
 source "$HOME/.config/sg-nav/openai.env"
-ARGS="--split_l 0 --split_r 1 --num_episodes 10" \
+JOBID=$(ARGS="--split_l 0 --split_r 1 --num_episodes 10" \
   LLM_BACKEND=openai LLM_MODEL=gpt-4o VLM_MODEL=gpt-4o \
-  sbatch scripts/hakusan/sg_nav_hakusan.sbatch
+  sbatch scripts/hakusan/sg_nav_hakusan.sbatch | awk '{print $4}')
+echo "$JOBID"
 ```
 
-Slurm prints a job ID:
-
-```text
-Submitted batch job <JOBID>
-```
-
-Monitor the job. Replace `<JOBID>` with the printed job ID:
+Monitor the job:
 
 ```bash
 cd "$HOME/sg-nav"
-COMPACT=1 scripts/hakusan/watch_job.sh <JOBID> sg-nav
+COMPACT=1 scripts/hakusan/watch_job.sh "$JOBID" sg-nav
 ```
 
 Cancel the job if needed:
 
 ```bash
-scancel <JOBID>
+scancel "$JOBID"
 ```
 
 ## 6. Aggregate Results
@@ -200,6 +214,7 @@ Distance-to-goal: 3.194
 
 - `Matterport3D scenes directory is missing`: the bundle was not extracted into
   `~/sg-nav/assets`.
+- `sg-nav_hakusan_readme.sif: no such file`: run Step 2 before Step 3.
 - `ObjectNav val episode file is missing`: the bundle was not extracted into
   `~/sg-nav/assets`.
 - `model checkpoint is missing`: the bundle was not extracted into
