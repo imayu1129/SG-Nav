@@ -6,7 +6,7 @@ OUT_DIR="${OUT_DIR:-${ROOT}/dist/hakusan}"
 BUNDLE="${BUNDLE:-${OUT_DIR}/sg-nav_reproduction_bundle.tar.gz}"
 
 required_files=(
-  sg-nav_hakusan_readme.sif
+  sg-nav_hakusan_readme.tar.gz
   sg-nav_hakusan_readme_submit_files.tar.gz
   sg-nav_hakusan_readme_assets.tar.gz
   SHA256SUMS

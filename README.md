@@ -16,14 +16,17 @@ GPU numerics, and the 10-episode subset are not bitwise deterministic.
 
 ## What You Need
 
-The author provides this file separately:
+The author provides this file separately through a private or institutional
+download URL:
 
 ```text
 sg-nav_reproduction_bundle.tar.gz
 ```
 
-The bundle contains the Singularity image, helper files, MP3D ObjectNav data,
+The bundle contains the Docker image archive, helper files, MP3D ObjectNav data,
 and model checkpoints. You only need to prepare your own OpenAI API key.
+
+Do not upload this bundle to a public GitHub Release if it contains MP3D data.
 
 ## 1. Login and Set Up Hakusan
 
@@ -48,15 +51,17 @@ cd "$HOME/sg-nav"
 pwd
 ```
 
-Download the reproduction bundle on Hakusan:
+Download the reproduction bundle on Hakusan. Replace
+`PASTE_PRIVATE_BUNDLE_URL_HERE` with the URL provided by the author:
 
 ```bash
-BUNDLE_URL="https://github.com/imayu1129/SG-Nav/releases/download/reproduction/sg-nav_reproduction_bundle.tar.gz"
+BUNDLE_URL="PASTE_PRIVATE_BUNDLE_URL_HERE"
 curl -fL "$BUNDLE_URL" -o sg-nav_reproduction_bundle.tar.gz
 ls -lh sg-nav_reproduction_bundle.tar.gz
 ```
 
-If `curl` returns `404`, the reproduction bundle has not been uploaded yet.
+If `curl` returns `404` or `403`, ask the author for the correct private bundle
+URL or access permission.
 
 ## 2. Extract the Bundle
 
@@ -69,6 +74,7 @@ sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sg-nav_hakusan_readme_submit_files.tar.gz
 mkdir -p assets
 tar -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
+./scripts/hakusan/build_sif_on_hakusan.sh sg-nav_hakusan_readme.tar.gz
 ls -lh sg-nav_hakusan_readme.sif
 ```
 
@@ -196,10 +202,7 @@ This is only for the person preparing the reproduction artifact:
 
 ```bash
 ./scripts/hakusan/package_reproduction_bundle.sh
-gh release view reproduction >/dev/null 2>&1 || \
-  gh release create reproduction --title "SG-Nav reproduction bundle" --notes "Reproduction bundle for SG-Nav-GPT MP3D."
-gh release upload reproduction \
-  dist/hakusan/sg-nav_reproduction_bundle.tar.gz \
-  dist/hakusan/sg-nav_reproduction_bundle.tar.gz.sha256 \
-  --clobber
 ```
+
+Upload `dist/hakusan/sg-nav_reproduction_bundle.tar.gz` to a private or
+institutional file host, then put that URL in Step 1.
