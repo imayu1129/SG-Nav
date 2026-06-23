@@ -264,6 +264,14 @@ Initializing task ObjectNav-v1
 Navigate Step: 0
 ```
 
+The run is progressing correctly when episode result and average lines appear:
+
+```text
+[SG-Nav] episode 1/10 (1/10) result distance_to_goal=..., success=..., spl=...
+[SG-Nav] average 1/10: distance_to_goal=..., success=..., spl=...
+[SG-Nav] episode 2/10 (2/10) start goal=...
+```
+
 The run is complete when `run_10_episodes_on_node.sh` prints:
 
 ```text
