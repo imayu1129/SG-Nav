@@ -200,6 +200,9 @@ Expected:
 OK: OpenAI Responses API is reachable for model=gpt-4o.
 ```
 
+The `output=` field may be empty. If the line starts with `OK:`, the API check
+passed.
+
 If this returns `HTTP 500` or another transient server error, wait a minute and
 run the same check command again. The checker retries transient errors
 automatically.
@@ -210,12 +213,15 @@ Run this inside the A40 session:
 
 ```bash
 cd "$HOME/sg-nav"
+git pull --ff-only
 source "$HOME/.config/sg-nav/openai.env"
 set -o pipefail
 ARGS="--split_l 0 --split_r 1 --num_episodes 10" \
   LLM_BACKEND=openai LLM_MODEL=gpt-4o VLM_MODEL=gpt-4o \
   bash scripts/hakusan/sg_nav_hakusan.sbatch 2>&1 | tee "sg-nav-a40-${SLURM_JOB_ID}.log"
 ```
+
+The run log is saved as `sg-nav-a40-${SLURM_JOB_ID}.log`.
 
 ## 7. Aggregate Results
 
