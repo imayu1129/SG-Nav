@@ -4,6 +4,7 @@
 import gzip
 import json
 import os
+import sys
 from pathlib import Path
 
 
@@ -14,19 +15,30 @@ EPISODE_FILE = DATA_ROOT / "objectnav" / "mp3d" / "v1" / "val" / "val.json.gz"
 
 def require_path(path: Path, label: str) -> None:
     if not path.exists():
-        raise FileNotFoundError(f"{label} is missing: {path}")
+        relative = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+        raise FileNotFoundError(
+            f"{label} is missing: {relative}\n"
+            f"Place the required asset there, or create a symlink to the real asset path."
+        )
     print(f"[ok] {label}: {path.relative_to(ROOT)}")
 
 
-def main() -> None:
-    print(f"repo: {ROOT}")
+def main() -> int:
+    print(f"repo: {ROOT}", flush=True)
+    print(
+        "note: this check should run inside the submitted SG-Nav container or an equivalent maintainer environment",
+        flush=True,
+    )
 
     require_path(DATA_ROOT / "mp3d", "Matterport3D scenes directory")
     require_path(EPISODE_FILE, "ObjectNav val episode file")
 
     scene_files = sorted((DATA_ROOT / "mp3d").glob("*/*.glb"))
     if not scene_files:
-        raise FileNotFoundError("No .glb scene files were found under data/MatterPort3D/mp3d")
+        raise FileNotFoundError(
+            "No .glb scene files were found under data/MatterPort3D/mp3d.\n"
+            "Expected layout: data/MatterPort3D/mp3d/<scene_id>/<scene_id>.glb"
+        )
     print(f"[ok] scene count: {len(scene_files)}")
 
     with gzip.open(EPISODE_FILE, "rt", encoding="utf-8") as f:
@@ -72,6 +84,12 @@ def main() -> None:
     else:
         print("[warn] Ollama server is not reachable; run ./run_sg_nav.sh to auto-start the local server")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        raise SystemExit(main())
+    except (FileNotFoundError, ModuleNotFoundError, RuntimeError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(1)
