@@ -1,7 +1,7 @@
 # SG-Nav-GPT MP3D Reproduction
 
-Reviewer workflow: **use the provided Docker/Singularity image**. Do not create
-a host-side `SG_Nav` conda environment.
+Use the provided Docker/Singularity image. Do not create a host-side `SG_Nav`
+conda environment.
 
 Reference run:
 
@@ -58,6 +58,9 @@ if [[ -f sg-nav_hakusan_readme_assets.tar.gz ]]; then
   tar -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
 fi
 ```
+
+If assets are placed manually and no asset archive is provided, verify only the
+files that are actually present.
 
 If `sg-nav_hakusan_readme.sif` is not provided:
 
@@ -146,20 +149,3 @@ softspl=0.216574
 - `WARNING: Could not find any nv files on this host`: submit a Slurm GPU job.
 - `EGL_NOT_INITIALIZED`: use `scripts/hakusan/sg_nav_hakusan.sbatch`.
 - `singularity: command not found`: load Singularity/Apptainer on Hakusan.
-
-## Maintainer Only: Rebuild Image
-
-Reviewers should skip this section.
-
-```bash
-git clone --recursive https://github.com/imayu1129/SG-Nav.git
-cd SG-Nav
-conda activate SG_Nav
-INCLUDE_ASSETS=0 ./scripts/hakusan/build_local_image.sh
-./scripts/hakusan/save_image.sh
-./scripts/hakusan/package_assets.sh
-cd dist/hakusan
-sha256sum sg-nav_hakusan_readme.tar.gz \
-  sg-nav_hakusan_readme_assets.tar.gz \
-  sg-nav_hakusan_readme_submit_files.tar.gz > SHA256SUMS
-```
