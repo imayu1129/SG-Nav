@@ -38,7 +38,7 @@ SHA256: d253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607
 
 The bundle contains the Docker image archive, helper files, MP3D ObjectNav data,
 and model checkpoints. You only need to prepare your own OpenAI API key.
-The OpenAI API key is not needed for Steps 1-3. It is needed from Step 4.
+The OpenAI API key is not needed for Steps 1-4. It is needed from Step 5.
 
 Do not upload this bundle to a public GitHub Release if it contains MP3D data.
 
@@ -65,7 +65,28 @@ cd "$HOME/sg-nav"
 pwd
 ```
 
-Download the reproduction bundle on Hakusan:
+## 2. Enter an A40 Compute Node
+
+Do not extract the 30G bundle on the login node. Enter an A40 node first:
+
+```bash
+cd "$HOME/sg-nav"
+./scripts/hakusan/enter_a40_node.sh
+```
+
+After the prompt returns on the compute node, run:
+
+```bash
+hostname
+nvidia-smi -L
+cd "$HOME/sg-nav"
+```
+
+All remaining steps should be run inside this A40 session.
+
+## 3. Download and Prepare the Bundle
+
+Run this inside the A40 session:
 
 ```bash
 BUNDLE_URL="https://jstorage.app.box.com/index.php?rm=box_download_shared_file&shared_name=semgxoruxgg1psnha4dzrlv4e7699p0b&file_id=f_2303493332796"
@@ -82,7 +103,7 @@ else
 fi
 ```
 
-Expected:
+The download is successful if you see:
 
 ```text
 sg-nav_reproduction_bundle.tar.gz: OK
@@ -93,59 +114,39 @@ download permission is enabled.
 If the download speed is extremely slow, press `Ctrl-C` and run the same block
 again later. The `-C -` option resumes an incomplete download.
 
-## 2. Extract the Bundle
-
-Do not extract the 30G bundle on the login node. Submit a Slurm job:
+Prepare the bundle on the same A40 node:
 
 ```bash
 cd "$HOME/sg-nav"
-JOBID=$(sbatch scripts/hakusan/prepare_bundle_hakusan.sbatch | awk '{print $4}')
-echo "$JOBID"
+./scripts/hakusan/prepare_bundle_on_node.sh
 ```
 
-Check the job:
-
-```bash
-squeue -j "$JOBID"
-ls -lh prepare-bundle-*.out prepare-bundle-*.err 2>/dev/null || true
-tail -n 80 prepare-bundle-*.out prepare-bundle-*.err 2>/dev/null
-```
-
-This step is successful if you see all of these:
+This step is successful if you see:
 
 ```text
 sg-nav_reproduction_bundle.tar.gz: OK
 sg-nav_hakusan_readme.tar.gz: OK
 sg-nav_hakusan_readme_assets.tar.gz: OK
 sg-nav_hakusan_readme_submit_files.tar.gz: OK
-OK: bundle extraction and SIF build completed.
+OK: bundle extraction and SIF build completed on the A40 compute node.
 ```
 
-Do not run Step 3 before this succeeds.
+Do not run Step 4 before this succeeds.
 
-## 3. Check Container and Assets
+## 4. Check Container and Assets
 
-Run this on Hakusan:
+Run this inside the A40 session:
 
 ```bash
 cd "$HOME/sg-nav"
-JOBID=$(sbatch scripts/hakusan/check_env_hakusan.sbatch | awk '{print $4}')
-echo "$JOBID"
-```
-
-Check the job:
-
-```bash
-squeue -j "$JOBID"
-ls -lh check-env-*.out check-env-*.err 2>/dev/null || true
-tail -n 80 check-env-*.out check-env-*.err 2>/dev/null
+./scripts/hakusan/check_env_on_node.sh
 ```
 
 Do not start evaluation until this check passes.
 
-## 4. Configure OpenAI
+## 5. Configure OpenAI
 
-Run this on Hakusan:
+Run this inside the A40 session:
 
 ```bash
 mkdir -p "$HOME/.config/sg-nav"
@@ -171,35 +172,22 @@ Expected:
 OK: OpenAI Responses API is reachable for model=gpt-4o.
 ```
 
-## 5. Run 10 Episodes
+## 6. Run 10 Episodes
 
-Run this on Hakusan:
+Run this inside the A40 session:
 
 ```bash
 cd "$HOME/sg-nav"
 source "$HOME/.config/sg-nav/openai.env"
-JOBID=$(ARGS="--split_l 0 --split_r 1 --num_episodes 10" \
+set -o pipefail
+ARGS="--split_l 0 --split_r 1 --num_episodes 10" \
   LLM_BACKEND=openai LLM_MODEL=gpt-4o VLM_MODEL=gpt-4o \
-  sbatch scripts/hakusan/sg_nav_hakusan.sbatch | awk '{print $4}')
-echo "$JOBID"
+  bash scripts/hakusan/sg_nav_hakusan.sbatch 2>&1 | tee "sg-nav-a40-${SLURM_JOB_ID}.log"
 ```
 
-Monitor the job:
+## 7. Aggregate Results
 
-```bash
-cd "$HOME/sg-nav"
-COMPACT=1 scripts/hakusan/watch_job.sh "$JOBID" sg-nav
-```
-
-Cancel the job if needed:
-
-```bash
-scancel "$JOBID"
-```
-
-## 6. Aggregate Results
-
-Run this on Hakusan after the job completes:
+Run this inside the A40 session after the job completes:
 
 ```bash
 cd "$HOME/sg-nav"
@@ -228,13 +216,14 @@ Distance-to-goal: 3.194
 
 - `Matterport3D scenes directory is missing`: the bundle was not extracted into
   `~/sg-nav/assets`.
-- `sg-nav_hakusan_readme.sif: no such file`: run Step 2 before Step 3.
+- `sg-nav_hakusan_readme.sif: no such file`: run Step 3 before Step 4.
 - `ObjectNav val episode file is missing`: the bundle was not extracted into
   `~/sg-nav/assets`.
 - `model checkpoint is missing`: the bundle was not extracted into
   `~/sg-nav/assets`.
 - `OpenAI API HTTP 429 ... insufficient_quota`: fix OpenAI billing/quota.
-- `WARNING: Could not find any nv files on this host`: submit a Slurm GPU job.
+- `WARNING: Could not find any nv files on this host`: you are probably not
+  inside the A40 compute node. Run Step 2 first.
 - `EGL_NOT_INITIALIZED`: use `scripts/hakusan/sg_nav_hakusan.sbatch`.
 - `singularity: command not found`: load Singularity/Apptainer on Hakusan.
 
@@ -247,7 +236,7 @@ This is only for the person preparing the reproduction artifact:
 ```
 
 Upload `dist/hakusan/sg-nav_reproduction_bundle.tar.gz` to a private or
-institutional file host, then put that URL in Step 1.
+institutional file host, then put that URL in Step 3.
 
 The current tested bundle is:
 

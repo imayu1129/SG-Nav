@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -z "${SLURM_JOB_ID:-}" ]]; then
+  echo "ERROR: run this after entering an A40 compute node with scripts/hakusan/enter_a40_node.sh." >&2
+  exit 1
+fi
+
+cd "${SG_NAV_REPO_DIR:-$PWD}"
+
+if [[ -r /etc/profile.d/modules.sh ]]; then
+  # Some Hakusan compute nodes expose container tools only after module init.
+  # shellcheck disable=SC1091
+  source /etc/profile.d/modules.sh
+fi
+
+if ! command -v singularity >/dev/null 2>&1 && ! command -v apptainer >/dev/null 2>&1; then
+  module load singularity 2>/dev/null || module load apptainer 2>/dev/null || true
+fi
+
+CONTAINER_BIN="$(command -v singularity || command -v apptainer || true)"
+if [[ -z "${CONTAINER_BIN}" ]]; then
+  echo "ERROR: neither singularity nor apptainer was found on this node." >&2
+  echo "Run 'module avail singularity apptainer' on Hakusan to confirm the module name." >&2
+  exit 127
+fi
+
+echo "hostname=$(hostname)"
+echo "SLURM_JOB_ID=${SLURM_JOB_ID}"
+nvidia-smi -L
+
+export SINGULARITYENV_NVIDIA_DRIVER_CAPABILITIES=all
+export SINGULARITYENV___EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json
+export SINGULARITYENV_EGL_PLATFORM=surfaceless
+export APPTAINERENV_NVIDIA_DRIVER_CAPABILITIES="${SINGULARITYENV_NVIDIA_DRIVER_CAPABILITIES}"
+export APPTAINERENV___EGL_VENDOR_LIBRARY_FILENAMES="${SINGULARITYENV___EGL_VENDOR_LIBRARY_FILENAMES}"
+export APPTAINERENV_EGL_PLATFORM="${SINGULARITYENV_EGL_PLATFORM}"
+
+GPU_ARGS=(--nv)
+EXTRA_BINDS=()
+HOST_EGL_JSON=""
+for candidate in /usr/share/glvnd/egl_vendor.d/10_nvidia.json /etc/glvnd/egl_vendor.d/10_nvidia.json; do
+  if [[ -r "${candidate}" ]]; then
+    HOST_EGL_JSON="${candidate}"
+    break
+  fi
+done
+
+HOST_EGL_LIB="$(ldconfig -p 2>/dev/null | awk '/libEGL_nvidia\.so\.0/ {print $NF; exit}')"
+if [[ -z "${HOST_EGL_LIB}" ]]; then
+  HOST_EGL_LIB="$(find /usr /lib64 /lib -name 'libEGL_nvidia.so.0' 2>/dev/null | head -n 1 || true)"
+fi
+
+if [[ -n "${HOST_EGL_JSON}" ]]; then
+  EXTRA_BINDS+=(--bind "${HOST_EGL_JSON}:/usr/share/glvnd/egl_vendor.d/10_nvidia.json:ro")
+fi
+if [[ -n "${HOST_EGL_LIB}" ]]; then
+  EXTRA_BINDS+=(--bind "$(dirname "${HOST_EGL_LIB}"):/host-nvidia-libs:ro")
+fi
+if [[ -d "$PWD/assets/.local/ollama" ]]; then
+  EXTRA_BINDS+=(--bind "$PWD/assets/.local/ollama:/opt/sg-nav/.local/ollama")
+fi
+if [[ -d "$PWD/assets/.local/ollama-models" ]]; then
+  EXTRA_BINDS+=(--bind "$PWD/assets/.local/ollama-models:/opt/sg-nav/.local/ollama-models")
+fi
+mkdir -p "$PWD/runtime/check-env-${SLURM_JOB_ID}"
+EXTRA_BINDS+=(--bind "$PWD/runtime/check-env-${SLURM_JOB_ID}:/runtime")
+
+CONTAINER_ENV_ARGS=(
+  --env NVIDIA_DRIVER_CAPABILITIES=all
+  --env __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json
+  --env EGL_PLATFORM=surfaceless
+  --env LD_LIBRARY_PATH=/opt/sg-nav/.local/ollama/lib/ollama:/host-nvidia-libs
+  --env OLLAMA_LIBRARY_PATH=/opt/sg-nav/.local/ollama/lib/ollama
+  --env SG_NAV_RUNTIME_DIR=/runtime
+)
+
+"${CONTAINER_BIN}" exec "${GPU_ARGS[@]}" "${EXTRA_BINDS[@]}" "${CONTAINER_ENV_ARGS[@]}" \
+  --bind "$PWD/assets/data:/opt/sg-nav/data" \
+  --bind "$PWD/assets/GLIP/MODEL:/opt/sg-nav/GLIP/MODEL" \
+  sg-nav_hakusan_readme.sif bash -lc 'cd /opt/sg-nav && ./check_sg_nav_env.sh'
