@@ -95,43 +95,33 @@ again later. The `-C -` option resumes an incomplete download.
 
 ## 2. Extract the Bundle
 
-Run this on Hakusan:
+Do not extract the 30G bundle on the login node. Submit a Slurm job:
 
 ```bash
 cd "$HOME/sg-nav"
+JOBID=$(sbatch scripts/hakusan/prepare_bundle_hakusan.sbatch | awk '{print $4}')
+echo "$JOBID"
+```
 
-echo "[1/6] Extracting the 30G reproduction bundle. This can take several minutes."
-tar --checkpoint=200000 --checkpoint-action=dot -xzf sg-nav_reproduction_bundle.tar.gz
-echo
+Check the job:
 
-echo "[2/6] Checking the extracted archive checksums."
-sha256sum --ignore-missing -c SHA256SUMS
-
-echo "[3/6] Extracting helper files."
-tar -xzf sg-nav_hakusan_readme_submit_files.tar.gz
-
-echo "[4/6] Extracting assets. This can also take several minutes."
-mkdir -p assets
-tar --checkpoint=200000 --checkpoint-action=dot -xzf sg-nav_hakusan_readme_assets.tar.gz -C assets
-echo
-
-echo "[5/6] Building the Singularity image from the Docker archive."
-./scripts/hakusan/build_sif_on_hakusan.sh sg-nav_hakusan_readme.tar.gz
-
-echo "[6/6] Checking the SIF image."
-ls -lh sg-nav_hakusan_readme.sif
+```bash
+squeue -j "$JOBID"
+ls -lh prepare-bundle-*.out prepare-bundle-*.err 2>/dev/null || true
+tail -n 80 prepare-bundle-*.out prepare-bundle-*.err 2>/dev/null
 ```
 
 This step is successful if you see all of these:
 
 ```text
+sg-nav_reproduction_bundle.tar.gz: OK
 sg-nav_hakusan_readme.tar.gz: OK
 sg-nav_hakusan_readme_assets.tar.gz: OK
 sg-nav_hakusan_readme_submit_files.tar.gz: OK
+OK: bundle extraction and SIF build completed.
 ```
 
-and `ls -lh sg-nav_hakusan_readme.sif` shows a SIF file. Do not run Step 3
-before this succeeds.
+Do not run Step 3 before this succeeds.
 
 ## 3. Check Container and Assets
 
