@@ -233,6 +233,14 @@ squeue -j "$SLURM_JOB_ID"
 squeue -u "$USER"
 ```
 
+If the run immediately exits with status `141`, pull the latest scripts and run
+again:
+
+```bash
+git pull --ff-only
+./scripts/hakusan/run_10_episodes_on_node.sh
+```
+
 ## 7. Aggregate Results
 
 Run this inside the A40 session after the job completes:

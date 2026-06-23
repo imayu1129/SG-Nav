@@ -44,9 +44,12 @@ for candidate in /usr/share/glvnd/egl_vendor.d/10_nvidia.json /etc/glvnd/egl_ven
   fi
 done
 
-HOST_EGL_LIB="$(ldconfig -p 2>/dev/null | awk '/libEGL_nvidia\.so\.0/ {print $NF; exit}')"
+HOST_EGL_LIB="$(
+  set +o pipefail
+  ldconfig -p 2>/dev/null | awk '/libEGL_nvidia\.so\.0/ {print $NF; exit}'
+)"
 if [[ -z "${HOST_EGL_LIB}" ]]; then
-  HOST_EGL_LIB="$(find /usr /lib64 /lib -name 'libEGL_nvidia.so.0' 2>/dev/null | head -n 1 || true)"
+  HOST_EGL_LIB="$(find /usr /lib64 /lib -name 'libEGL_nvidia.so.0' -print -quit 2>/dev/null || true)"
 fi
 
 if [[ -n "${HOST_EGL_JSON}" ]]; then
