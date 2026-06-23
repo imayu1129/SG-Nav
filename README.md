@@ -130,8 +130,9 @@ SHOW_ROOTLESS_WARNINGS=1 ./scripts/hakusan/prepare_bundle_on_node.sh
 ```
 
 During `INFO: Creating SIF file...`, the final `.sif` file may not appear until
-the build completes. From another Hakusan login terminal, check that the
-interactive A40 job is still running:
+the build completes. This can take a long time and may look stuck. Do not press
+`Ctrl-C` unless the job has clearly failed. From another Hakusan login terminal,
+check that the interactive A40 job is still running:
 
 ```bash
 squeue -j "$SLURM_JOB_ID"
