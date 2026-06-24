@@ -7,7 +7,7 @@ Reference result:
 
 ```text
 Setting: SG-Nav-GPT, MP3D ObjectNav validation, first 10 episodes
-Result:  SR 30.0%, SPL 14.0%, distance-to-goal 3.194
+Result:  SR 40.0%, SPL 17.3%, distance-to-goal 2.467
 Paper:   SR 40.2%, SPL 16.0% on full validation
 ```
 
@@ -296,15 +296,27 @@ Submitted output:
 
 total_episodes=10
 weighted_average:
-  distance_to_goal: 3.194013
-  softspl: 0.216574 (21.66%)
-  spl: 0.139923 (13.99%)
-  success: 0.300000 (30.00%)
+  distance_to_goal: 2.466671
+  softspl: 0.248937 (24.89%)
+  spl: 0.172725 (17.27%)
+  success: 0.400000 (40.00%)
 
 report:
-  SR: 30.0%
-  SPL: 14.0%
-  Distance-to-goal: 3.194
+  SR: 40.0%
+  SPL: 17.3%
+  Distance-to-goal: 2.467
+```
+
+## Optional Clean Re-run
+
+Do not delete the successful run until the report is finished. To test the
+README from scratch, keep the successful directory as evidence and clone again:
+
+```bash
+cd "$HOME"
+mv sg-nav "sg-nav-success-$(date +%Y%m%d-%H%M)"
+git clone https://github.com/imayu1129/SG-Nav.git "$HOME/sg-nav"
+cd "$HOME/sg-nav"
 ```
 
 ## Troubleshooting
