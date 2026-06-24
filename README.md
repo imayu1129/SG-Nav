@@ -214,29 +214,7 @@ git pull --ff-only
 ./scripts/hakusan/run_10_episodes_on_node.sh
 ```
 
-The run log is saved as `sg-nav-a40-${SLURM_JOB_ID}.log`.
-
-To watch the run from another Hakusan terminal:
-
-```bash
-cd "$HOME/sg-nav"
-./scripts/hakusan/watch_latest_run_log.sh
-```
-
-To check that the A40 session is still alive:
-
-```bash
-squeue -j "$SLURM_JOB_ID"
-squeue -u "$USER"
-```
-
-If the run immediately exits with status `141`, pull the latest scripts and run
-again:
-
-```bash
-git pull --ff-only
-./scripts/hakusan/run_10_episodes_on_node.sh
-```
+The same output is also saved as `sg-nav-a40-${SLURM_JOB_ID}.log`.
 
 These messages are expected and are not fatal errors:
 
@@ -337,6 +315,8 @@ cd "$HOME/sg-nav"
   `git pull --ff-only` and retry, or run it with `python3`.
 - `No such file or directory ... [0:1]/results.txt`: use the
   `episodes_0_10/results.txt` path shown in Step 7.
+- `ERROR: SG-Nav run failed with exit status 141`: run `git pull --ff-only` and
+  rerun Step 6.
 - `git pull --ff-only` says local changes would be overwritten: this only means
   your Hakusan copy has local edits. It does not affect GitHub. Restore the
   local scripts and pull again:
