@@ -39,6 +39,8 @@ SHA256: d253d9ddc2c16b6d5f7b339968e8f0d2bcb3fa0dd1de1370d5bc045deae68607
 The bundle contains the Docker image archive, helper files, MP3D ObjectNav data,
 and model checkpoints. You only need to prepare your own OpenAI API key.
 The OpenAI API key is not needed for Steps 1-4. It is needed from Step 5.
+You do not need write access to this GitHub repository. `git clone` and
+`git pull --ff-only` only download files into your own Hakusan home directory.
 
 Do not upload this bundle to a public GitHub Release if it contains MP3D data.
 
@@ -137,15 +139,6 @@ check that the interactive A40 job is still running:
 ```bash
 squeue -j "$SLURM_JOB_ID"
 squeue -u "$USER"
-```
-
-Normally you do not need the commands below. Use them only if
-`git pull --ff-only` says local script changes would be overwritten:
-
-```bash
-git fetch origin
-git restore scripts/hakusan/build_sif_on_hakusan.sh scripts/hakusan/sg_nav_hakusan.sbatch
-git pull --ff-only
 ```
 
 This step is successful if you see:
@@ -344,6 +337,15 @@ cd "$HOME/sg-nav"
   `git pull --ff-only` and retry, or run it with `python3`.
 - `No such file or directory ... [0:1]/results.txt`: use the
   `episodes_0_10/results.txt` path shown in Step 7.
+- `git pull --ff-only` says local changes would be overwritten: this only means
+  your Hakusan copy has local edits. It does not affect GitHub. Restore the
+  local scripts and pull again:
+
+```bash
+git fetch origin
+git restore scripts/hakusan/build_sif_on_hakusan.sh scripts/hakusan/sg_nav_hakusan.sbatch
+git pull --ff-only
+```
 
 ## Author: Create the Bundle
 
