@@ -43,12 +43,23 @@ def main():
     print()
     print(f"total_episodes={total_rows}")
     print("weighted_average:")
+    averages = {}
     for key in sorted(totals):
         avg = totals[key] / total_rows
+        averages[key] = avg
         if key in {"success", "spl", "softspl"}:
             print(f"  {key}: {avg:.6f} ({avg * 100:.2f}%)")
         else:
             print(f"  {key}: {avg:.6f}")
+
+    print()
+    print("report:")
+    if "success" in averages:
+        print(f"  SR: {averages['success'] * 100:.1f}%")
+    if "spl" in averages:
+        print(f"  SPL: {averages['spl'] * 100:.1f}%")
+    if "distance_to_goal" in averages:
+        print(f"  Distance-to-goal: {averages['distance_to_goal']:.3f}")
 
 
 if __name__ == "__main__":

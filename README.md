@@ -280,29 +280,31 @@ OK: SG-Nav run completed.
 
 ## 7. Aggregate Results
 
-Run this inside the A40 session after the job completes:
+Run this after the job completes. This is a lightweight command and can be run
+on the login node after the A40 session ends:
 
 ```bash
 cd "$HOME/sg-nav"
-scripts/hakusan/aggregate_episode_runs.py assets/data/results/experiment_0/[0:1]/results.txt
+git pull --ff-only
+scripts/hakusan/aggregate_episode_runs.py 'assets/data/results/experiment_0/[0:1]/results.txt'
 ```
 
 Submitted output:
 
 ```text
+[assets/data/results/experiment_0/[0:1]/results.txt] episodes=10
+
 total_episodes=10
-distance_to_goal=3.194012809393462
-success=0.300000
-spl=0.139923
-softspl=0.216574
-```
+weighted_average:
+  distance_to_goal: 3.194013
+  softspl: 0.216574 (21.66%)
+  spl: 0.139923 (13.99%)
+  success: 0.300000 (30.00%)
 
-Report:
-
-```text
-SR: 30.0%
-SPL: 14.0%
-Distance-to-goal: 3.194
+report:
+  SR: 30.0%
+  SPL: 14.0%
+  Distance-to-goal: 3.194
 ```
 
 ## Troubleshooting
@@ -322,6 +324,8 @@ Distance-to-goal: 3.194
   step. The scripts search both modules and Hakusan absolute install paths.
 - `Connection closed by ... port 22`: try `hakusan2`, then retry later if both
   login nodes reject the session.
+- `Permission denied` when running `aggregate_episode_runs.py`: run
+  `git pull --ff-only` and retry, or run it with `python3`.
 
 ## Author: Create the Bundle
 
