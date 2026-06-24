@@ -286,13 +286,13 @@ on the login node after the A40 session ends:
 ```bash
 cd "$HOME/sg-nav"
 git pull --ff-only
-scripts/hakusan/aggregate_episode_runs.py 'assets/data/results/experiment_0/[0:1]/results.txt'
+scripts/hakusan/aggregate_episode_runs.py 'assets/data/results/experiment_0/[0:1]/episodes_0_10/results.txt'
 ```
 
 Submitted output:
 
 ```text
-[assets/data/results/experiment_0/[0:1]/results.txt] episodes=10
+[assets/data/results/experiment_0/[0:1]/episodes_0_10/results.txt] episodes=10
 
 total_episodes=10
 weighted_average:
@@ -326,6 +326,8 @@ report:
   login nodes reject the session.
 - `Permission denied` when running `aggregate_episode_runs.py`: run
   `git pull --ff-only` and retry, or run it with `python3`.
+- `No such file or directory ... [0:1]/results.txt`: use the
+  `episodes_0_10/results.txt` path shown in Step 7.
 
 ## Author: Create the Bundle
 

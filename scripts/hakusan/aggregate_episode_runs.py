@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import ast
+import glob
 from pathlib import Path
 
 
@@ -11,6 +12,26 @@ def read_rows(path: Path):
         if line:
             rows.append(ast.literal_eval(line))
     return rows
+
+
+def resolve_results_files(raw_path: str):
+    path = Path(raw_path)
+    if path.is_dir():
+        direct = path / "results.txt"
+        if direct.exists():
+            return [direct]
+        return sorted(path.glob("**/results.txt"))
+    if path.exists():
+        return [path]
+
+    matches = [Path(match) for match in sorted(glob.glob(raw_path))]
+    files = []
+    for match in matches:
+        if match.is_dir() and (match / "results.txt").exists():
+            files.append(match / "results.txt")
+        elif match.name == "results.txt":
+            files.append(match)
+    return files
 
 
 def main():
@@ -27,18 +48,24 @@ def main():
     totals = {}
     total_rows = 0
     for raw_path in args.paths:
-        path = Path(raw_path)
-        results_file = path / "results.txt" if path.is_dir() else path
-        rows = read_rows(results_file)
-        print(f"[{results_file}] episodes={len(rows)}")
-        for row in rows:
-            for key, value in row.items():
-                if isinstance(value, (int, float)):
-                    totals[key] = totals.get(key, 0.0) + float(value)
-        total_rows += len(rows)
+        results_files = resolve_results_files(raw_path)
+        if not results_files:
+            print(f"[missing] {raw_path}")
+            continue
+        for results_file in results_files:
+            rows = read_rows(results_file)
+            print(f"[{results_file}] episodes={len(rows)}")
+            for row in rows:
+                for key, value in row.items():
+                    if isinstance(value, (int, float)):
+                        totals[key] = totals.get(key, 0.0) + float(value)
+            total_rows += len(rows)
 
     if total_rows == 0:
-        raise SystemExit("No result rows were found.")
+        raise SystemExit(
+            "No result rows were found. Try: "
+            "scripts/hakusan/aggregate_episode_runs.py assets/data/results/experiment_0"
+        )
 
     print()
     print(f"total_episodes={total_rows}")
