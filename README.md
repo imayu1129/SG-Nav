@@ -139,8 +139,8 @@ squeue -j "$SLURM_JOB_ID"
 squeue -u "$USER"
 ```
 
-If `git pull --ff-only` says local script changes would be overwritten, restore
-the GitHub scripts and pull again:
+Normally you do not need the commands below. Use them only if
+`git pull --ff-only` says local script changes would be overwritten:
 
 ```bash
 git fetch origin
@@ -185,6 +185,10 @@ Run this inside the A40 session:
 cd "$HOME/sg-nav"
 ./scripts/hakusan/configure_openai_key.sh
 ```
+
+When the terminal shows `OPENAI_API_KEY:`, paste your own OpenAI API key and
+press Enter. The key is saved outside the repository at
+`$HOME/.config/sg-nav/openai.env`.
 
 Check API access:
 
